@@ -2,110 +2,63 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
- content="width=device-width,initial-scale=1">
-<title>AI 宣傳文案工作室</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI 宣傳文案工作室 V2</title>
 <style>
-body {
-  font-family: system-ui,sans-serif;
-  background:#f4f3fa;
-  margin:0;
-  padding:20px;
-  color:#27233a;
-}
-main {
-  max-width:540px;
-  margin:30px auto;
-  background:white;
-  border-radius:20px;
-  padding:24px;
-  box-shadow:0 8px 28px #24204012;
-}
-h1 {font-size:25px}
-label {display:block;margin-top:18px;font-weight:600}
-input,textarea,select,button {
-  box-sizing:border-box;
-  width:100%;
-  font:inherit;
-  padding:13px;
-  margin-top:8px;
-  border-radius:10px;
-}
-input,textarea,select {border:1px solid #ccc}
-button {
-  background:#6453d6;
-  color:white;
-  border:0;
-  margin-top:20px;
-  cursor:pointer;
-}
-#result {
-  white-space:pre-wrap;
-  background:#f3f0ff;
-  padding:18px;
-  border-radius:12px;
-  margin-top:20px;
-}
-small {color:#666}
+*{box-sizing:border-box}body{font-family:system-ui,-apple-system,sans-serif;background:#f4f2fb;margin:0;padding:18px;color:#28243b}main{max-width:720px;margin:20px auto;background:#fff;padding:24px;border-radius:20px;box-shadow:0 8px 30px #29204614}h1{font-size:1.55rem;margin:0 0 8px}.hint{color:#676277;font-size:.9rem}label{display:block;font-weight:650;margin-top:18px}input,textarea,select,button{font:inherit;width:100%;border-radius:10px;padding:12px;margin-top:8px}input,textarea,select{border:1px solid #c9c5d5;background:#fff}button{border:0;background:#6553d7;color:#fff;font-weight:650;cursor:pointer}button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid #bcb3fa;outline-offset:2px}.results{display:grid;gap:15px;margin-top:20px}.card{background:#f5f2ff;border:1px solid #e3ddff;border-radius:14px;padding:16px}.card h2{font-size:1.1rem;margin:0}.copy{background:#fff;border:1px solid #7666db;color:#5140b4;padding:9px 12px;width:auto}.card-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.copy-text{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65}.footer{font-size:.85rem;color:#716d80;margin-top:22px}
 </style>
 </head>
 <body>
 <main>
-<h1>✨ AI 宣傳文案工作室</h1>
-<p>30 秒產生你的行銷文案</p>
-<label>店家名稱</label>
-<input id="shop" placeholder="例如：幸福咖啡">
-<label>活動內容</label>
-<textarea id="offer"
- placeholder="例如：週末第二杯半價"></textarea>
-<label>文案風格</label>
-<select id="tone">
-<option value="friendly">親切活潑</option>
-<option value="pro">專業質感</option>
-<option value="sale">限時促銷</option>
-</select>
-<button onclick="generate()">產生文案</button>
-<div id="result" hidden></div>
-<button id="copy" onclick="copyText()" hidden>
-複製文案
-</button>
-<p><small>免費試用版｜範本自動產生</small></p>
+<h1>✨ AI 宣傳文案工作室 V2</h1>
+<p class="hint">輸入活動資訊，一次產生三種不同風格的宣傳文案。</p>
+<label for="shop">店家名稱</label>
+<input id="shop" placeholder="例如：幸福咖啡" maxlength="80">
+<label for="offer">活動內容</label>
+<textarea id="offer" rows="3" placeholder="例如：週末第二杯半價" maxlength="400"></textarea>
+<label for="platform">發布平台</label>
+<select id="platform"><option>Instagram</option><option>Facebook</option><option>LINE</option></select>
+<button type="button" id="generate">一次產生三種文案</button>
+<div id="results" class="results" aria-live="polite"></div>
+<p class="footer">免費範本版｜目前不連接 AI API，不收取 Token 費用。請確認優惠內容與活動條款後再發布。</p>
 </main>
 <script>
-let currentText="";
-function generate(){
- const shop=document.getElementById("shop").value.trim();
- const offer=document.getElementById("offer").value.trim();
- const tone=document.getElementById("tone").value;
- if(!shop||!offer){
-   alert("請填寫店家名稱及活動內容");
-   return;
- }
- const templates={
-  friendly:`✨ ${shop}有好消息！
-${offer}！
-快揪朋友一起來看看吧 ❤️`,
-  pro:`讓日常多一份美好。
-${shop}推出「${offer}」。
-歡迎了解活動詳情。`,
-  sale:`🔥 限時活動推薦！
-${shop}推出「${offer}」！
-歡迎立即洽詢活動資訊。`
- };
- currentText=templates[tone]+
- `\n\n#${shop.replace(/\s/g,"")} #活動推薦`;
- document.getElementById("result").textContent=currentText;
- document.getElementById("result").hidden=false;
- document.getElementById("copy").hidden=false;
+const shopEl=document.getElementById('shop');
+const offerEl=document.getElementById('offer');
+const platformEl=document.getElementById('platform');
+const resultsEl=document.getElementById('results');
+let round=0;
+function buildTexts(shop,offer,platform){
+ const hash=shop.replace(/\s+/g,'').replace(/[^\p{L}\p{N}_]/gu,'').slice(0,35);
+ const tags=platform==='LINE'?'':`\n\n${hash?'#'+hash+' ':''}#活動推薦 #好康分享`;
+ const endings=[['快揪朋友一起來看看吧 💕','歡迎分享給有興趣的朋友！'],['歡迎了解活動詳情。','期待為您提供更多活動資訊。'],['把握機會，歡迎立即洽詢！','想知道更多？現在就來詢問！']];
+ const n=round%2;
+ return [
+  {title:'🌸 親切活潑',text:`✨ ${shop}有好消息啦！\n${offer}！\n${endings[0][n]}${tags}`},
+  {title:'✨ 專業質感',text:`讓每一次選擇，都更值得期待。\n${shop}推出「${offer}」。\n${endings[1][n]}${tags}`},
+  {title:'🔥 限時促銷',text:`🔥 ${shop}活動推薦！\n${offer}！\n${endings[2][n]}${tags}`}
+ ];
 }
-async function copyText(){
- try{
-  await navigator.clipboard.writeText(currentText);
-  alert("已複製文案");
- }catch(e){
-  alert("請長按文案選取並複製");
+function render(){
+ const shop=shopEl.value.trim(),offer=offerEl.value.trim();
+ if(!shop||!offer){alert('請先填寫店家名稱與活動內容');return;}
+ const items=buildTexts(shop,offer,platformEl.value);
+ resultsEl.replaceChildren();
+ for(const item of items){
+  const card=document.createElement('section');card.className='card';
+  const head=document.createElement('div');head.className='card-head';
+  const title=document.createElement('h2');title.textContent=item.title;
+  const copy=document.createElement('button');copy.className='copy';copy.type='button';copy.textContent='複製文案';
+  copy.addEventListener('click',async()=>{
+   try{await navigator.clipboard.writeText(item.text);copy.textContent='已複製 ✓';}
+   catch(e){alert('複製失敗，請長按文案手動複製');}
+  });
+  const body=document.createElement('p');body.className='copy-text';body.textContent=item.text;
+  head.append(title,copy);card.append(head,body);resultsEl.append(card);
  }
+ round++;
 }
+document.getElementById('generate').addEventListener('click',render);
 </script>
 </body>
 </html>
